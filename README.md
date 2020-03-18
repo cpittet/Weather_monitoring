@@ -14,14 +14,36 @@ Weather station using Raspberry Pi SenseHat sensor to collect data (temperature,
 │      
 │
 └───src
-    │   
-    │   
-    │
-    └───data_collection
-        │   collect.py
-        │   docker-compose.yml
-        │   Dockerfile
-        │   send_data.sh
-        │   start_collecting.sh
-        │   stop_collecting.sh
+│   │   
+│   │   
+│   │
+│   └───data_collection
+│   │   │   collect.py
+│   │   │   docker-compose.yml
+│   │   │   Dockerfile
+│   │   │   send_data.sh
+│   │   │   start_collecting.sh
+│   │   │   stop_collecting.sh
+│   │
+│   │
+│   │
+│   └───database
+│   │   │   
+│   │   │   docker-compose.yml
+│   │   │   Dockerfile
+│   │   │   
+│   │   │   
+│   │   │   
+│   │
+│   │
+│   │
+│   └───processing
+│   │   │   
+│   │   │   
+│   │   │   
+│   │   │   
+│   │   │   
+│   │   │   
+│
+└───data
 ```
