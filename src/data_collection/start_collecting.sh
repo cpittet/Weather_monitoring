@@ -41,10 +41,18 @@ fi
 # at 0030, 0630, 1230, 1830. See crontab guru for format
 
 # Add the collect.py task to the crontab
-cmd1="00 * * * * cd ~/RaspberryProjects/weather_monitoring/Weather_monitoring/src/data_collection && python3 collect.py"
-(crontab -l 2>/dev/null; echo $cmd1) | crontab -
 
+# https://stackoverflow.com/questions/878600/how-to-create-a-cron-job-using-bash-automatically-without-the-interactive-editor
+# write out current crontab
+crontab -l > mycron
+# echo new cron into cron file
+echo "*/5 * * * * cd /home/pi/RaspberryProjects/weather_monitoring/Weather_monitoring/src/data_collection && python3 collect.py" >> mycron
 
 # Add the send_data.sh task to the crontab.
-cmd2="30 */6  * * * cd ~/RaspberryProjects/weather_monitoring/Weather_monitoring/src/data_collection && ./send_data.sh"
-(crontab -l 2>/dev/null; echo $cmd2) | crontab -
+# echo "20 * * * * cd /home/pi/RaspberryProjects/weather_monitoring/Weather_monitoring/src/data_collection && ./send_data.sh" >> mycron
+
+# install new cron file
+crontab mycron
+rm mycron
+
+
