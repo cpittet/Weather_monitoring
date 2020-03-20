@@ -11,14 +11,16 @@
 #      as a dictionnary using json format
 
 import json
+import time
 from pathlib import Path
-from datetime import date
+from datetime import datetime
 from sense_hat import SenseHat
 
 sensor = SenseHat()
 
 # Display the letter 'M' (for measuring) in green on white background
-sensor.show_letter('M', [0, 255, 0], [255, 255, 255])
+sensor.clear()
+sensor.show_letter('M', [0, 255, 0])
 
 # Temperature in Celsius
 temperature = sensor.get_temperature()
@@ -38,11 +40,15 @@ data = {'temperature' : temperature,
         'pressure' : pressure}
 
 # Get the date and time
-time = date.now().strftime("%Y%m%d%H%M")
+cur_time = datetime.now().strftime("%Y%m%d%H%M")
 
 # Creates the directory
-Path("/usr/src/script/data/"+time.mkdir(exist_ok=True)
+Path("volume/"+cur_time).mkdir(exist_ok=True)
 
 # Writes the data in the file data.json
-with open('data/'+time+'data.json', 'w') as write_file:
+with open('volume/'+cur_time+'/data.json', 'w') as write_file:
     json.dump(data, write_file)
+
+time.sleep(5)
+
+sensor.clear()
