@@ -14,9 +14,7 @@ services:
         env_file:
             - './influxdb/env.influxdb'
         volumes:
-            - type: volume
-              source: ./influxdb/data
-              target: /var/lib/influxdb
+            - ./influxdb/data:/var/lib/influxdb
 
         #secrets:
         #    - secret_file
