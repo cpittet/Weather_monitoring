@@ -6,17 +6,15 @@ version: '3.1'
 
 services:
     influxdb:
-        build: .
+        image: influxdb
         container_name: influxdb
         restart: always
         ports:
             - '8086:8086'
         env_file:
-            - './influxdb/env.influxdb'
+            - './influxdb/config/env.influxdb'
         volumes:
-            - type: volume
-              source: ./influxdb/data
-              target: /var/lib/influxdb
+            - ./influxdb/data:/var/lib/influxdb
 
         #secrets:
         #    - secret_file
