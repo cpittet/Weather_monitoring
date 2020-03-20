@@ -12,7 +12,7 @@
 # https://stackoverflow.com/questions/5267597/best-way-to-programmatically-check-for-a-failed-scp-in-a-shell-script
 for d in ./volume/*/ ;
 do
-    scp -r pi@192.168.1.124:./volume/$d /home/pi/RaspberryProjects/weather_monitoring/Weather_monitoring/data
+    scp -r ./volume/$d pi@192.168.1.124:/home/pi/RaspberryProjects/weather_monitoring/Weather_monitoring/data
     if [ $? -eq 0 ];
     then
         # It was successful, so remove data sample directory
