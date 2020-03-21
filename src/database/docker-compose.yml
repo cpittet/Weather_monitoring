@@ -1,21 +1,32 @@
 version: '3.1'
-
-#secrets:
-    #secret_file:
-    #    file: ip_address.txt
-
 services:
-    influxdb:
+     grafana:
+        image: grafana/grafana:5.4.3
+        container_name: grafana
+        restart: always
+        ports:
+            - 3000:3000
+        networks:
+            - monitoring
+        volumes:
+            - grafana-volume:/var/lib/grafana
+
+     influxdb:
         image: influxdb
         container_name: influxdb
         restart: always
+        networks:
+            - monitoring
         ports:
-            - '8086:8086'
-        env_file:
-            - './influxdb/config/env.influxdb'
+            - 8086:8086
         volumes:
-            - ./influxdb/data:/var/lib/influxdb
-            -./influx_init.iql:/docker-entrypoint-initdb.d/influx_init.iql
+            - influxdb-data-volume:/var/lib/influxdb
 
-        #secrets:
-        #    - secret_file
+networks:
+  monitoring:
+
+volumes:
+  influxdb-data-volume:
+    external: true
+  grafana-volume:
+    external: true
