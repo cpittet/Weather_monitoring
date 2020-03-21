@@ -40,7 +40,7 @@ success = client.write_points(points)
 client.close()
 
 sensor = SenseHat()
-sensor.set_rotation(90)
+sensor.set_rotation(270)
 
 if success:
     # The transfer succeeded, remove the data samples from RP3 volume directory,
