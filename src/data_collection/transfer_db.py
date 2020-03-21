@@ -1,7 +1,5 @@
 #!/bin/python3
 
-# Last update : 19.03.2020, Cyrille Pittet
-
 # This script :
 #   1) Walks through all data samples in the volume directory and send them
 #   2) If one of them fails to send, we keep it, otherwise, if it was succesful,
@@ -19,18 +17,19 @@ from sense_hat import SenseHat
 points = []
 
 # Loop over all the directories (data samples) in  the volume directory
-for sample_dir, dirs, data_file in os.walk('volume'):
+for roots, dirs, files in os.walk('volume'):
     # Read the data
-    with open(join('volume', join(sample_dir, 'data.json')) as f:
+    with open(join(roots, files[0])) as f:
         data = json.load(f)
 
     points.append(data)
 
+
 # Connect to the influx db
 client = InfluxDBClient(host='192.168.1.124',
                         port=8086,
-                        username='python_module',
-                        password='pt3',
+                        username='collector',
+                        password='roger',
                         database='db',
                         timeout=10)
 
