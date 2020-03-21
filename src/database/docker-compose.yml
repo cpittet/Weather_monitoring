@@ -24,5 +24,5 @@ networks:
   monitoring:
 
 volumes:
-  influxdb-volume:
+  influxdb-data-volume:
     external: true
