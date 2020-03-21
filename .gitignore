@@ -1,1 +1,3 @@
-src/database/influxdb/config/
+src/database/influxdb/config/*
+src/data_collection/volume/*
+data/2*

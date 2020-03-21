@@ -11,38 +11,54 @@
 #      as a dictionnary using json format
 
 import json
+import time
 from pathlib import Path
-from datetime import date
+from datetime import datetime
 from sense_hat import SenseHat
 
 sensor = SenseHat()
+sensor.set_rotation(270)
 
 # Display the letter 'M' (for measuring) in green on white background
-sensor.show_letter('M', [0, 255, 0], [255, 255, 255])
+sensor.clear()
+sensor.show_letter('M', [0, 255, 0])
 
 # Temperature in Celsius
-temperature = sensor.get_temperature()
-temperature_from_pressure = sensor.get_temperature_from_pressure();
-temperature_from_humidity = sensor.get_temperature_from_humidity();
+temperature = float(sensor.get_temperature())
+temperature_from_pressure = float(sensor.get_temperature_from_pressure())
+temperature_from_humidity = float(sensor.get_temperature_from_humidity())
 
 # Relative percentage of humidity
-humidity = sensor.get_humidity()
+humidity = float(sensor.get_humidity())
 
 # Pressure in Millibars
-pressure = sensor.get_pressure()
+pressure = float(sensor.get_pressure())
 
-data = {'temperature' : temperature,
-        'temperature_pressure' : temperature_from_pressure,
-        'temperature_humidity' : temperature_from_humidity,
-        'humidity' : humidity,
-        'pressure' : pressure}
+# Get the current time of the measurement
+timestamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+
+data = {
+        'measurement': 'raw_data',
+        'time': timestamp,
+        'fields': {
+            'temperature': temperature,
+            'temperature_pressure': temperature_from_pressure,
+            'temperature_humidity': temperature_from_humidity,
+            'humidity': humidity,
+            'pressure': pressure
+        }
+}
 
 # Get the date and time
-time = date.now().strftime("%Y%m%d%H%M")
+cur_time = datetime.now().strftime("%Y%m%d%H%M")
 
 # Creates the directory
-Path("/usr/src/script/data/"+time.mkdir(exist_ok=True)
+Path("volume/"+cur_time).mkdir(exist_ok=True)
 
 # Writes the data in the file data.json
-with open('data/'+time+'data.json', 'w') as write_file:
+with open('volume/'+cur_time+'/data.json', 'w') as write_file:
     json.dump(data, write_file)
+
+time.sleep(5)
+
+sensor.clear()

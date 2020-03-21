@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM raspbian/stretch
 
 # Create script directory for the app
 RUN mkdir -p /usr/src/script
@@ -7,8 +7,9 @@ RUN mkdir -p /usr/src/script
 WORKDIR /usr/src/script
 
 # Install libraries for the sensor
-RUN sudo apt update
-RUN sudo apt install sense-hat
+# Without sudo, because not recognized
+RUN apt update
+RUN apt -y install sense-hat
 
 # Copy the script into the container
 COPY collect.py collect.py

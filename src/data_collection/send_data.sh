@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Last update : 18.03.2020, Cyrille Pittet
+# Last update : 19.03.2020, Cyrille Pittet
 
 # This script :
 #   1) Try to send all the folders present in the volume directory.

@@ -1,15 +1,10 @@
 #!/bin/bash
 
-# Last update : 18.03.2020, Cyrille Pittet
+# Last update : 19.03.2020, Cyrille Pittet
 
 # This script :
-#   1) Create (if not here) a directory 'volume' used as volume by the container
-#   2) If data are still present in the volume directory, this means there were not
-#      sent to the other Raspi, so we send them.
-#   2) Start the data_collector container
-#   Only as cron job : 3) Execute, inside the container, the python script that actually collects the data
-#   Only as cron job : 4) Execute, on the host, the bash script that send the data to the other Raspi
-#   5) Add the tasks 3) and 4) to the crontab, in order to execute them periodically
+#   1) Create (if not here) a directory 'volume' used to store the data
+#      temporarily
 
 # Creates the volume directory of the host if it does not exist
 mkdir -p volume
@@ -32,7 +27,7 @@ if find "./volume" -mindepth 1 -quit 2>/dev/null | grep -q .; then
 fi
 
 # Starts the container
-docker-compose up -d
+# docker-compose up -d
 
 # Executes the python script inside the container that collects the data
 #docker-compose exec -d data_collector python3 name.py
@@ -46,10 +41,16 @@ docker-compose up -d
 # at 0030, 0630, 1230, 1830. See crontab guru for format
 
 # Add the collect.py task to the crontab
-cmd1="00 * * * * cd ~/RaspberryProjects/weather_monitoring/Weather_monitoring/src/data_collection && docker-compose exec -d data_collector python3 collect.py"
-(crontab -l 2>/dev/null; echo $cmd1) | crontab -
 
+# https://stackoverflow.com/questions/878600/how-to-create-a-cron-job-using-bash-automatically-without-the-interactive-editor
+# write out current crontab
+crontab -l > mycron
+# echo new cron into cron file
+echo "10 * * * * cd /home/pi/RaspberryProjects/weather_monitoring/Weather_monitoring/src/data_collection && python3 collect.py" >> mycron
 
-# Add the send_data.sh task to the crontab.
-cmd2="30 */6  * * * cd ~/RaspberryProjects/weather_monitoring/Weather_monitoring/src/data_collection && ./send_data.sh"
-(crontab -l 2>/dev/null; echo $cmd2) | crontab -
+# Add the send_db.sh task to the crontab.
+# echo "05 * * * * cd /home/pi/RaspberryProjects/weather_monitoring/Weather_monitoring/src/data_collection && ./send_db.sh" >> mycron
+
+# install new cron file
+crontab mycron
+rm mycron
