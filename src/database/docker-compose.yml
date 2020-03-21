@@ -1,9 +1,5 @@
 version: '3.1'
 
-#secrets:
-    #secret_file:
-    #    file: ip_address.txt
-
 services:
     influxdb:
         image: influxdb
@@ -11,11 +7,14 @@ services:
         restart: always
         ports:
             - '8086:8086'
-        env_file:
-            - './influxdb/config/env.influxdb'
+        environment:
+            - INFLUXDB_DB=db
+#            - INFLUXDB_HTTP_AUTH_ENABLED=true
+#            - INFLUXDB_ADMIN_USER=admin
+#            - INFLUXDB_ADMIN_PASSWORD=radis
+#            - INFLUXDB_USER=python_module
+#            - INFLUXDB_USER_PASSWORD=pt3
+            - INFLUXDB_DATA_WAL_FSYNC_DELAY=70
         volumes:
             - ./influxdb/data:/var/lib/influxdb
-            -./influx_init.iql:/docker-entrypoint-initdb.d/influx_init.iql
 
-        #secrets:
-        #    - secret_file
