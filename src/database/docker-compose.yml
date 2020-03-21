@@ -1,7 +1,17 @@
 version: '3.1'
-
 services:
-    influxdb:
+     grafana:
+        image: grafana/grafana:5.4.3
+        container_name: grafana
+        restart: always
+        ports:
+            - 3000:3000
+        networks:
+            - monitoring
+        volumes:
+            - grafana-volume:/var/lib/grafana
+
+     influxdb:
         image: influxdb
         container_name: influxdb
         restart: always
@@ -11,17 +21,6 @@ services:
             - 8086:8086
         volumes:
             - influxdb-data-volume:/var/lib/influxdb
-
-    grafana:
-        image: grafana/grafana
-        container_name: grafana
-        restart: always
-        ports:
-            - 3000:3000
-        networks:
-            - monitoring
-        volumes:
-            - grafana-volume:/var/lib/grafana
 
 networks:
   monitoring:
