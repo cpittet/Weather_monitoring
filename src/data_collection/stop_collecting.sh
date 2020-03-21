@@ -10,7 +10,7 @@
 
 # Stops the cron jobs
 crontab -l 2>/dev/null | grep -v 'python3 collect.py' | crontab -
-crontab -l 2>/dev/null | grep -v './send_data.sh' | crontab -
+crontab -l 2>/dev/null | grep -v './send_db.sh' | crontab -
 
 # Stops the running container
 # docker-compose stop

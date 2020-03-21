@@ -24,15 +24,15 @@ sensor.clear()
 sensor.show_letter('M', [0, 255, 0])
 
 # Temperature in Celsius
-temperature = sensor.get_temperature()
-temperature_from_pressure = sensor.get_temperature_from_pressure();
-temperature_from_humidity = sensor.get_temperature_from_humidity();
+temperature = float(sensor.get_temperature())
+temperature_from_pressure = float(sensor.get_temperature_from_pressure())
+temperature_from_humidity = float(sensor.get_temperature_from_humidity())
 
 # Relative percentage of humidity
-humidity = sensor.get_humidity()
+humidity = float(sensor.get_humidity())
 
 # Pressure in Millibars
-pressure = sensor.get_pressure()
+pressure = float(sensor.get_pressure())
 
 # Get the current time of the measurement
 timestamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
