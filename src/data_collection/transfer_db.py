@@ -23,12 +23,10 @@ for sample_dir, dirs, data_file in os.walk('volume'):
 
     samples.append(data)
 
-
-
 # Connect to the influx db
 client = InfluxDBClient(host='192.168.1.124',
                         port=8086,
-                        username='admin',
-                        password='radis',
+                        username='python_module',
+                        password='pt3',
                         database='dbname',
                         timeout=10)

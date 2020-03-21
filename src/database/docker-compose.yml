@@ -15,6 +15,7 @@ services:
             - './influxdb/config/env.influxdb'
         volumes:
             - ./influxdb/data:/var/lib/influxdb
+            -./influx_init.iql:/docker-entrypoint-initdb.d/influx_init.iql
 
         #secrets:
         #    - secret_file

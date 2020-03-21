@@ -2,7 +2,7 @@
 Weather station using Raspberry Pi SenseHat sensor to collect data (temperature, humidity, pressure) and analyze / visualize them.
 
 ## Context
-- 1x Raspberry Pi 3 B+ : runs a docker container which runs a python scripts that collects the data every hour. Then the Raspberry send them to the second Raspberry every 6 hours.
+- 1x Raspberry Pi 3 B+ : runs a python scripts that collects the data every hour. Then the Raspberry send them to the InfluxDB server on the other Raspberry every 6 hours.
 
 - 1x Raspberry Pi 4 B : runs an InfluxDB docker container which receives the data collected.
 
@@ -19,26 +19,31 @@ Weather station using Raspberry Pi SenseHat sensor to collect data (temperature,
 │   │
 │   └───data_collection
 │   │   │   collect.py
+│   │   │   trasnfer_db.py
 │   │   │   docker-compose.yml
 │   │   │   Dockerfile
 │   │   │   send_data.sh
+│   │   │   send_db.sh
 │   │   │   start_collecting.sh
 │   │   │   stop_collecting.sh
+│   │   │   build_docker_image.sh
 │   │
 │   │
 │   │
 │   └───database
-│   │   │   
+│   │   │   check_new_data.sh
 │   │   │   docker-compose.yml
 │   │   │   Dockerfile
+│   │   │   influx_init.iql
+│   │   │   start_db_server.sh
+│   │   │   stop_db_server.sh
 │   │   │   
-│   │   │   
-│   │   │   
-│   │
+│   │   │
+│   │   └───influxdb
 │   │
 │   │
 │   └───processing
-│   │   │   
+│   │   │   clean.py
 │   │   │   
 │   │   │   
 │   │   │   
