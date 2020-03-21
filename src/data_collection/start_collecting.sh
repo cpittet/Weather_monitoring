@@ -54,5 +54,3 @@ echo "*/5 * * * * cd /home/pi/RaspberryProjects/weather_monitoring/Weather_monit
 # install new cron file
 crontab mycron
 rm mycron
-
-

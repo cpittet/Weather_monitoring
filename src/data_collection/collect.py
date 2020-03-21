@@ -17,6 +17,7 @@ from datetime import datetime
 from sense_hat import SenseHat
 
 sensor = SenseHat()
+sensor.set_rotation(90)
 
 # Display the letter 'M' (for measuring) in green on white background
 sensor.clear()
