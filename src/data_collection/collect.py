@@ -33,11 +33,20 @@ humidity = sensor.get_humidity()
 # Pressure in Millibars
 pressure = sensor.get_pressure()
 
-data = {'temperature' : temperature,
-        'temperature_pressure' : temperature_from_pressure,
-        'temperature_humidity' : temperature_from_humidity,
-        'humidity' : humidity,
-        'pressure' : pressure}
+# Get the current time of the measurement
+timestamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+
+data = {
+        'measurement': 'raw_data',
+        'time': timestamp,
+        'fields': {
+            'temperature': temperature,
+            'temperature_pressure': temperature_from_pressure,
+            'temperature_humidity': temperature_from_humidity,
+            'humidity': humidity,
+            'pressure': pressure
+        }
+}
 
 # Get the date and time
 cur_time = datetime.now().strftime("%Y%m%d%H%M")
