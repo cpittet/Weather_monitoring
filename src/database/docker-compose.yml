@@ -10,6 +10,14 @@ services:
             - monitoring
         volumes:
             - grafana-volume:/var/lib/grafana
+        environment:
+            - GF_SMTP_ENABLED=true
+            - GF_SMTP_HOST=smtp.gmail.com:587
+            - GF_SMTP_USER=your_email
+            - GF_SMTP_PASSWORD=password_to_change
+            - GF_SMTP_SKIP_VERIFY=true
+            - GF_SMTP_FROM_ADDRESS=your_email
+            - GF_SMTP_FROM_NAME=Grafana
 
      influxdb:
         image: influxdb
