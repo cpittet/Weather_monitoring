@@ -1,3 +1,4 @@
 src/database/influxdb/config/*
 src/data_collection/volume/*
 data/2*
+src/database/docker-compose.yml
