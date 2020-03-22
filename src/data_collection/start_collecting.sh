@@ -46,10 +46,10 @@ fi
 # write out current crontab
 crontab -l > mycron
 # echo new cron into cron file
-echo "10 * * * * cd /home/pi/RaspberryProjects/weather_monitoring/Weather_monitoring/src/data_collection && python3 collect.py" >> mycron
+echo "0 * * * * cd /home/pi/RaspberryProjects/weather_monitoring/Weather_monitoring/src/data_collection && python3 collect.py" >> mycron
 
 # Add the send_db.sh task to the crontab.
-echo "05 * * * * cd /home/pi/RaspberryProjects/weather_monitoring/Weather_monitoring/src/data_collection && ./send_db.sh" >> mycron
+echo "5 * * * * cd /home/pi/RaspberryProjects/weather_monitoring/Weather_monitoring/src/data_collection && ./send_db.sh" >> mycron
 
 # install new cron file
 crontab mycron
