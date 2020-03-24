@@ -25,9 +25,6 @@ for roots, dirs, files in os.walk('volume'):
 
         points.append(data)
 
-print(points)
-
-
 # Connect to the influx db
 client = InfluxDBClient(host='192.168.1.124',
                         port=8086,

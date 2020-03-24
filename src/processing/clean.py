@@ -81,6 +81,6 @@ data = {'temperature':temp,
 # Create panda dataframe
 df = pd.DataFrame(data)
 
-
+# Do the cleaning in parallel
 
 client.close()

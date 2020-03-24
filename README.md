@@ -52,3 +52,7 @@ Multiple files are useless at this point, this is in construction.
 │
 └───data
 ```
+
+## Sources of meteorological data
+Source : MétéoSuisse, Bundesamt für Meteorologie und Klimatologie
+Obtained via : https://opendata.swiss/en/dataset/automatische-wetterstationen-aktuelle-messwerte
