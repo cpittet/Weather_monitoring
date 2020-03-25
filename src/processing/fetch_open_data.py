@@ -51,10 +51,10 @@ point = [{
             'time': timestamp,
             'fields': {
                 'temperature': temp,
-                'temperature_pressure': 0f,
-                'temperature_humidity': 0f,
+                'temperature_pressure': float(0),
+                'temperature_humidity': float(0),
                 'humidity': humidity,
-                'pressure': 0f
+                'pressure': float(0)
             }
 }]
 
