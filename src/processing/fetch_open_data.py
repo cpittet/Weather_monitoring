@@ -44,12 +44,18 @@ timestamp = time[:4]+'-'+time[4:6]+'-'+time[6:8]+'T'+str((int(time[8:10]) - 1)%2
 
 # Format the data as a point in json
 point = [{
-            'measurement': 'open_data',
+            'measurement': 'data',
+            'tags': {
+                'source': 'meteosuisse'
+            },
             'time': timestamp,
             'fields': {
                 'temperature': temp,
+                'temperature_pressure': 0f,
+                'temperature_humidity': 0f,
                 'humidity': humidity,
-                }
+                'pressure': 0f
+            }
 }]
 
 # Connect to the influxdb server
