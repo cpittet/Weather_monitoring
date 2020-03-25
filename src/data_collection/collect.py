@@ -35,7 +35,7 @@ humidity = float(sensor.get_humidity())
 pressure = float(sensor.get_pressure())
 
 # Get the current time of the measurement
-timestamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+timestamp = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
 
 data = {
         'measurement': 'data',
