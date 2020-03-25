@@ -38,7 +38,10 @@ pressure = float(sensor.get_pressure())
 timestamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
 
 data = {
-        'measurement': 'raw_data',
+        'measurement': 'data',
+        'tags': {
+            'source': 'sensehat'
+        },
         'time': timestamp,
         'fields': {
             'temperature': temperature,
