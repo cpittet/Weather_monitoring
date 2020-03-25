@@ -37,9 +37,11 @@ if (humidity != '-'):
 else:
     humidity = float(-10)
 
-# Read the time when the data where measured
+# Read the time when the data where measured, have to substract 1h
+# due to the time format in influxdb
 time = str(df.loc[df['stn'] == 'MAS', 'time'].values[0])
-timestamp = time[:4]+'-'+time[4:6]+'-'+time[6:8]+'T'+time[8:10]+':'+time[10:]+'Z'
+timestamp = time[:4]+'-'+time[4:6]+'-'+time[6:8]+'T'+
+            str((int(time[8:10]) - 1)%24)+':'+time[10:]+'Z'
 
 # Format the data as a point in json
 point = [{
