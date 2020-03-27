@@ -1,3 +1,4 @@
+src/data_collection/transfer_db_cloud.py
 src/database/influxdb/config/*
 src/data_collection/volume/*
 data/2*
