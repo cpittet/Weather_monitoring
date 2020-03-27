@@ -19,22 +19,16 @@ Multiple files are useless at this point, this is in construction.
 │   │
 │   └───data_collection
 │   │   │   collect.py
-│   │   │   trasnfer_db.py
+│   │   │   transfer_db.py
 │   │   │   docker-compose.yml
-│   │   │   Dockerfile
 │   │   │   send_data.sh
-│   │   │   send_db.sh
 │   │   │   start_collecting.sh
 │   │   │   stop_collecting.sh
-│   │   │   build_docker_image.sh
 │   │
 │   │
 │   │
 │   └───database
-│   │   │   check_new_data.sh
 │   │   │   docker-compose.yml
-│   │   │   Dockerfile
-│   │   │   influx_init.iql
 │   │   │   start_db_server.sh
 │   │   │   stop_db_server.sh
 │   │   │   
@@ -44,13 +38,11 @@ Multiple files are useless at this point, this is in construction.
 │   │
 │   └───processing
 │   │   │   clean.py
+│   │   │   fetch_open_data.py
+│   │   │   start_fetching_open_data.sh
+│   │   │   stop_fetching_open_data.sh
 │   │   │   
-│   │   │   
-│   │   │   
-│   │   │   
-│   │   │   
-│
-└───data
+
 ```
 
 ## Sources of meteorological data
