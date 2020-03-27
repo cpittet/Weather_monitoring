@@ -10,6 +10,8 @@ services:
             - monitoring
         volumes:
             - grafana-volume:/var/lib/grafana
+        env_file:
+            - gf_smtp.env
 
      influxdb:
         image: influxdb
