@@ -13,6 +13,17 @@
 import pandas as pd
 from influxdb import InfluxDBClient
 
+
+# ------------------------------------------------------------------------------
+# Constants
+IP_RP4 = '192.168.1.124'
+PORT = 8086
+USER_NAME = 'collector'
+PWD = 'radis'
+DB_NAME = 'db'
+
+# ------------------------------------------------------------------------------
+
 # Source : MétéoSuisse, Bundesamt für Meteorologie und Klimatologie
 # obtained via https://opendata.swiss/en/dataset/automatische-wetterstationen-aktuelle-messwerte
 url = 'https://data.geo.admin.ch/ch.meteoschweiz.messwerte-aktuell/VQHA80.csv'
@@ -59,11 +70,11 @@ point = [{
 }]
 
 # Connect to the influxdb server
-client = InfluxDBClient(host='192.168.1.124',
-                        port=8086,
-                        username='collector',
-                        password='radis',
-                        database='db',
+client = InfluxDBClient(host=IP_RP4,
+                        port=PORT,
+                        username=USER_NAME,
+                        password=PWD,
+                        database=DB_NAME,
                         timeout=10)
 
 # Write the point to the server

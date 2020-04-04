@@ -20,7 +20,6 @@ sensor = SenseHat()
 sensor.set_rotation(270)
 
 # Display the letter 'M' (for measuring) in green on white background
-sensor.clear()
 sensor.show_letter('M', [0, 255, 0])
 
 # Temperature in Celsius
@@ -64,4 +63,23 @@ with open('volume/'+cur_time+'/data.json', 'w') as write_file:
 
 time.sleep(5)
 
-sensor.clear()
+# Check if there was an error before
+pixel = sensor.get_pixel(0, 7)
+
+# If yes, keep the error marker on the LEDs
+if (pixel[0] != 0):
+    x = [255, 0, 0]
+    o = [0, 0, 0]
+    error = [
+                    o, o, o, o, o, o, x, x,
+                    o, o, o, o, o, o, x, x,
+                    o, o, o, o, o, o, x, x,
+                    o, o, o, o, o, o, x, x,
+                    o, o, o, o, o, o, x, x,
+                    o, o, o, o, o, o, o, o,
+                    o, o, o, o, o, o, x, x,
+                    o, o, o, o, o, o, x, x
+                    ]
+    sensor.set_pixels(error)
+else:
+    sensor.clear()

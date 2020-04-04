@@ -13,6 +13,16 @@ from influxdb import InfluxDBClient
 from sense_hat import SenseHat
 
 
+# ------------------------------------------------------------------------------
+# Constants
+IP_RP4 = '192.168.1.124'
+PORT = 8086
+USER_NAME = 'collector'
+PWD = 'radis'
+DB_NAME = 'db'
+
+# ------------------------------------------------------------------------------
+
 # The list of samples to write to the db
 points = []
 
@@ -26,11 +36,11 @@ for roots, dirs, files in os.walk('volume'):
         points.append(data)
 
 # Connect to the influx db
-client = InfluxDBClient(host='192.168.1.124',
-                        port=8086,
-                        username='collector',
-                        password='radis',
-                        database='db',
+client = InfluxDBClient(host=IP_RP4,
+                        port=PORT,
+                        username=USER_NAME,
+                        password=PWD,
+                        database=DB_NAME,
                         timeout=10)
 
 # Sends the data to the influxdb server
