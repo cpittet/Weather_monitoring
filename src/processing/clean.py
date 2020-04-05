@@ -14,6 +14,7 @@ import sys
 from influxdb import InfluxDBClient, DataFrameClient
 import pandas as pd
 import numpy as np
+import format_OD
 
 # ------------------------------------------------------------------------------
 # Constants
@@ -25,6 +26,8 @@ PORT = 8086
 USER_NAME = 'collector'
 PWD = 'radis'
 DB_NAME = 'db'
+
+FORMATED_COLS = {'temperature', 'humidity'}
 
 # ------------------------------------------------------------------------------
 # Functions
@@ -174,6 +177,63 @@ def clean_data(dataframe, dataframe_convol):
         else:
             clean_column(dataframe, dataframe_convol, col, mode='average')
 
+# Make the meteo suisse dataframe dst_df containing the interpolated data for
+# every hour using the module format_OD from the given src_df "raw" meteo
+# suisse dataframe. The hours corresponds to the given 'time' column.
+# Returns the formated dataframe dst_df
+def prepare_ms_df(src_df, time_column):
+    # Add the needed columns to the newly created dst_df dataframe:
+    # with the correct size : 'time', 'temperature', 'humidity'
+    dst_df = pd.DataFrame();
+    dst_df['time'] = pd.to_datetime(time_column)
+    dst_df['temperature'] = np.empty(len(dst_df.index))
+    dst_df['humidity'] = np.empty(len(dst_df.index))
+
+    # Format the dataframe
+    format_OD.format_dataframe(dst_df, src_df, FORMATED_COLS)
+    return dst_df
+
+# Compute the average difference of column col between the values in the sensehat_clean_df
+# dataframe and the corresponding one in the form_ms_df formated meteo suisse
+# data dataframe. It does not take into account the values for which there
+# is a Nan in either dataframe. It is supposed that both columns have
+# the same indexing and values at same index correspond to the same time
+# Returns the average
+def avg_diff_col(form_ms_df, sensehat_clean_df, col):
+    avg_diff = 0
+    count = 0
+    ms = form_ms_df[col].values
+    sh = sensehat_clean_df[col].values
+    for i in range(sh.shape[0]):
+        if (ms[i] != np.nan and sh[i] != np.nan):
+            avg_diff += (sh[i] - ms[i])
+            count += 1
+    return avg_diff / count
+
+# Compute the average difference for each formated column between those 2
+# dataframes. Returns them as a dict : {'temperature' : avg_diff_temp,
+# 'humidity' : avg_diff_humidity}
+def avg_diff_df(form_ms_df, sensehat_clean_df):
+    avg_diffs = {'temperature' : 0, 'humidity' : 0}
+    for col in FORMATED_COLS:
+        avg_diffs[col] = avg_diff_col(form_ms_df, sensehat_clean_df, col)
+    avg_diffs['temperature_humidity'] = avg_diffs['temperature']
+    avg_diffs['temperature_pressure'] = avg_diffs['temperature']
+    return avg_diffs
+
+# Adjust the given column col in dst_df dataframe
+# by the given adjustement value by substracting it to the current values
+def adjust_col(dst_df, col, adjustement):
+    arr = dst_df[col].values
+    for i in range(arr.shape[0]):
+        arr[i] -= adjustement
+
+# Adjust the whole dataframe dst_df according to the adjustements dict,
+# which specify the adjustement to do for each column in the formated df
+def adjust_df(dst_df, adjustements):
+    for col in adjustements.keys():
+        adjust_col(dst_df, col, adjustements[col])
+
 
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
@@ -248,6 +308,7 @@ print(df)
 print(df_convol)
 # Clean the data
 clean_data(df, df_convol)
+# Now the dataframe df is clean
 print(df)
 
 # ------------------------------------------------------------------------------
@@ -262,7 +323,11 @@ last_cleaned_time, query = query_data_to_clean(client,
 points_ms = query_to_points(query, client)
 df_ms = pd.DataFrame(points_ms)
 
+form_df = prepare_ms_df(df_ms, df['time'])
 print(df_ms)
+
+print(form_df)
+
 
 # Close the connections to the influxdb server
 df_client.close()
