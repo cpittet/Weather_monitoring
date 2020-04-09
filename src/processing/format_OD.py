@@ -12,15 +12,6 @@ import numpy as np
 # Functions
 # ------------------------------------------------------------------------------
 
-# Round the time value of the given date time value to the lower whole minute
-def round_time(time):
-    return time[:-4] + '00Z'
-
-# Round each element of the time column in the given DataFrame
-def round_time_columns(df):
-    for i in range(0, len(df.index)):
-        df['time'].values[i] = round_time(df['time'].values[i])
-
 # Returns the date as an int formated as follows : YYYYMMDD, so that we can
 # directly compare the int to see if a date is before another or not
 def get_date(time):

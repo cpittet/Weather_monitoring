@@ -115,7 +115,7 @@ def query_data_to_clean(client, source, last_cleaned=0, update_last_cleaned=True
 # with the given filter. Return the result, i.e. an np.array
 # the default filter is doing a difference current value - previous value
 def convolve_col(col_name,  dataframe, filter=[0, 1, -1]):
-    return np.convolve(dataframe[col_name].values, filter, 'same')
+    return np.convolve(dataframe[col_name].to_numpy(), filter, 'same')
 
 # Convolve the entire dataframe (columns by columns) with given filter
 # and store the convolved signals into the given dest_df, keeping
@@ -133,9 +133,8 @@ def convolve_dataframe(dataframe, dest_df, filter=[0, 1, -1]):
 # Clean the given column with the specified rules below (see function clean_data)
 # The mode specify the techniques used to correct values : average or copy
 def clean_column(dataframe, dataframe_convol, col, mode='average'):
-    # Assignement is by reference, so no need to reassign it later
-    values = dataframe[col].values
-    convol = dataframe_convol[col].values
+    values = dataframe[col].to_numpy()
+    convol = dataframe_convol[col].to_numpy()
 
     # Detect the indexes where the corresponding threshold is exceeded
     anormal_index = np.argwhere(np.absolute(convol) > THRESHOLDS[col])
@@ -153,8 +152,8 @@ def clean_column(dataframe, dataframe_convol, col, mode='average'):
                 values[i] = values[i+1]
     else:
         # I.e. copy method, only for temperature
-        for i in anormal_index:
-            values[i] = dataframe['temperature_humidity'].values[i]
+        values[anormal_index] = dataframe['temperature_humidity'].to_numpy()[anormal_index]
+    dataframe[col] = values
 
 
 
@@ -200,15 +199,9 @@ def prepare_ms_df(src_df, time_column):
 # the same indexing and values at same index correspond to the same time
 # Returns the average
 def avg_diff_col(form_ms_df, sensehat_clean_df, col):
-    avg_diff = 0
-    count = 0
-    ms = form_ms_df[col].values
-    sh = sensehat_clean_df[col].values
-    for i in range(sh.shape[0]):
-        if (ms[i] != np.nan and sh[i] != np.nan):
-            avg_diff += (sh[i] - ms[i])
-            count += 1
-    return avg_diff / count
+    ms = form_ms_df[col].to_numpy()
+    sh = sensehat_clean_df[col].to_numpy()
+    return np.nanmean((sh - ms), axis=0)
 
 # Compute the average difference for each formated column between those 2
 # dataframes. Returns them as a dict : {'temperature' : avg_diff_temp,
@@ -221,19 +214,18 @@ def avg_diff_df(form_ms_df, sensehat_clean_df):
     avg_diffs['temperature_pressure'] = avg_diffs['temperature']
     return avg_diffs
 
-# Adjust the given column col in dst_df dataframe
-# by the given adjustement value by substracting it to the current values
-def adjust_col(dst_df, col, adjustement):
-    arr = dst_df[col].values
-    for i in range(arr.shape[0]):
-        arr[i] -= adjustement
-
 # Adjust the whole dataframe dst_df according to the adjustements dict,
 # which specify the adjustement to do for each column in the formated df
 def adjust_df(dst_df, adjustements):
     for col in adjustements.keys():
-        adjust_col(dst_df, col, adjustements[col])
+        nparr = dst_df[col].to_numpy()
+        dst_df[col] = nparr - adjustements[col]
 
+# Write the given dataframe to the measurement on the database corresponding to
+# the influxdb client
+def write_df(df_to_write, measurement, df_client):
+    if (len(df_to_write.index) > 0):
+        df_client.write_points(df_to_write, measurement)
 
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
@@ -288,8 +280,7 @@ df_client = DataFrameClient(host=IP_RP4,
                             timeout=10)
 
 # Write the convolved signals to the influxdb server
-if (len(df_convol.index) > 0):
-    df_client.write_points(df_convol, 'convol_signals')
+write_df(df_convol, 'convol_signals', df_client)
 
 # ------------------------------------------------------------------------------
 # Correct the anormal values
@@ -304,12 +295,9 @@ if (len(df_convol.index) > 0):
 from_time = df['time'].values[0]
 df_convol = pd.DataFrame(query_convolution(client, from_time))
 
-print(df)
-print(df_convol)
 # Clean the data
 clean_data(df, df_convol)
 # Now the dataframe df is clean
-print(df)
 
 # ------------------------------------------------------------------------------
 # Now fetch the meteo suisse data and adjust,
@@ -323,11 +311,24 @@ last_cleaned_time, query = query_data_to_clean(client,
 points_ms = query_to_points(query, client)
 df_ms = pd.DataFrame(points_ms)
 
+# Format the meteo suisse data dataframe
 form_df = prepare_ms_df(df_ms, df['time'])
-print(df_ms)
 
-print(form_df)
+# Get the average differences for each columns
+# (i.e. sensehat data - meteo suisse data)
+avg_diffs = avg_diff_df(form_df, df)
 
+# Adjust the clean sensehat dataframe "df" with the average differences
+# for each column (in place)
+adjust_df(df, avg_diffs)
+
+# Now "df" is the sensehat data, cleaned and adjusted
+# Write the result to the measurement "clean_sh_data"
+# (just have to set the index to the time column to be able to write
+# directly to the influxdb database)
+df['time'] = pd.to_datetime(df['time'])
+df = df.set_index('time')
+write_df(df, 'clean_sh_data', df_client)
 
 # Close the connections to the influxdb server
 df_client.close()
