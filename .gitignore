@@ -1,4 +1,5 @@
 src/database/backup_db/*
+src/database/inflx.env
 src/data_collection/transfer_db_cloud.py
 src/database/gf_smtp.env
 src/database/influxdb/config/*
