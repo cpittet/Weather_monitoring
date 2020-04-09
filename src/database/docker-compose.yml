@@ -21,9 +21,11 @@ services:
             - monitoring
         ports:
             - 8086:8086
+        env_file:
+            - inflx.env
         volumes:
             - influxdb-data-volume:/var/lib/influxdb
-            - backup_db:backup_db
+            - backup_db:/backup_db
 
 networks:
   monitoring:
@@ -31,5 +33,6 @@ networks:
 volumes:
   influxdb-data-volume:
     external: true
+  backup_db:
   grafana-volume:
     external: true
