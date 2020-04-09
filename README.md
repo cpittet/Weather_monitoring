@@ -1,4 +1,4 @@
-# Weather monitoring (in construction)
+# Weather monitoring (in construction, code need to be refactored)
 Weather station using Raspberry Pi SenseHat sensor to collect data (temperature, humidity, pressure) and analyze / visualize them.
 
 ## Context
@@ -20,7 +20,6 @@ Multiple files are useless at this point, this is in construction.
 │   └───data_collection
 │   │   │   collect.py
 │   │   │   transfer_db.py
-│   │   │   docker-compose.yml
 │   │   │   send_data.sh
 │   │   │   start_collecting.sh
 │   │   │   stop_collecting.sh
