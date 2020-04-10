@@ -54,7 +54,11 @@ CONVOL_COLS = [TMP, HUM, PRES,
 # Query the db and returns the generator of the points
 # Note that the time is in UTC
 def query_to_points(query, client):
-    results = client.query(query)
+    try:
+        results = client.query(query)
+    except:
+        client.close()
+        return
     return results.get_points()
 
 
@@ -69,13 +73,13 @@ def query_convolution(client, from_time):
 # values of the convolutions). If last_cleaned_time == 0, return None,
 # otherwise return a Dataframe containing only the whole last row
 def query_last_raw_values(last_cleaned_time, client):
-    if (last_cleaned_time == '0'):
+    if (last_cleaned_time == 0):
         return None
     else:
         return pd.DataFrame(query_to_points(
             ('SELECT * FROM "db"."autogen"."data" '
-            +'WHERE "source" = \'sensehat\' AND time = \''
-            + str(last_cleaned_time) + '\''),
+            +'WHERE "source" = \'sensehat\' AND time = '
+            + str(last_cleaned_time)),
             client))
 
 # Check if the measurement 'clean_data' exists in the influxdb server
@@ -112,7 +116,7 @@ def query_data_to_clean(client, source, last_cleaned=0, update_last_cleaned=True
 
         # Query from the last_cleaned data, autogen is the retention policy
         query = ('SELECT ' + fields + ' FROM "db"."autogen"."data" WHERE "source" = \''
-                 + source + '\' AND time > \'' + str(last_cleaned) + '\'')
+                 + source + '\' AND time > ' + str(last_cleaned))
 
         return (last_cleaned, query)
 
@@ -140,7 +144,7 @@ def convolve_dataframe(src_df, dst_df, previous_row, filter=[0, 1, -1]):
         lambd = lambda col: np.convolve(col, filter, 'same')
         convol_np = np.apply_along_axis(lambd, axis=0, arr=df_np)
 
-        if (previous_row == None):
+        if (previous_row is None):
             convol_np[0,:] = 0
         else:
             # Set the first values of each columns in the convolutions to the
@@ -174,7 +178,7 @@ def clean_column(dataframe, dataframe_convol, col, previous_row,
                 # I.e. there is no next value, or we don't have it yet
                 values[i] = values[i-1]
             else:
-                if (previous_row == None):
+                if (previous_row is None):
                     # I.e. there is no previous value
                     values[i] = values[i+1]
                 else:
