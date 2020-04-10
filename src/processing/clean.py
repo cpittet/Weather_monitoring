@@ -27,11 +27,19 @@ PRES = 'pressure'
 THRESHOLDS = {TMP : 5, HUM : 7, PRES : 1,
               TMP_H : 5,
               TMP_P : 5}
-IP_RP4 = '192.168.1.124'
-PORT = 8086
-USER_NAME = 'collector'
-PWD = 'radis'
-DB_NAME = 'db'
+
+CREDENTIALS_FILE = '../credentials.txt'
+# =================================================================
+# Read the credentials in the file, omit the last char that is '\n'
+# when using readline
+with open(CREDENTIALS_FILE, 'r') as f:
+    IP_RP4 = f.readline()[:-1]
+    PORT = f.readline()[:-1]
+    USER_NAME = f.readline()[:-1]
+    PWD = f.readline()[:-1]
+    DB_NAME = f.readline()[:-1]
+
+# =================================================================
 
 FORMATED_COLS = [TMP, HUM]
 ADJUSTED_COLS = [TMP, HUM,
@@ -102,13 +110,6 @@ def query_data_to_clean(client, source, last_cleaned=0, update_last_cleaned=True
                 + source + '\''))
 
 
-# Make a convolution on the given column in the dataframe
-# with the given filter. Return the result, i.e. an np.array
-# the default filter is doing a difference current value - previous value
-def convolve_col(col_name,  dataframe, filter=[0, 1, -1]):
-    return np.convolve(dataframe[col_name].to_numpy(), filter, 'same')
-
-
 # Convolve the entire dataframe (columns by columns) with given filter
 # and store the convolved signals into the given dest_df, keeping
 # the same columns names. It also sets the 1st element of each column to 0
@@ -130,12 +131,6 @@ def convolve_dataframe(dataframe, dst_df, filter=[0, 1, -1]):
         # with multi-dimensional np array
         for i in range(len(CONVOL_COLS)):
             dst_df[CONVOL_COLS[i]] = convol_np[:,i]
-
-        #for col in dataframe.columns:
-        #    if (col != 'time'):
-        #        conv = convolve_col(col, dataframe=dataframe, filter=filter)
-        #        conv[0] = 0
-        #        dest_df[col] = conv
 
 
 # Clean the given column with the specified rules below (see function clean_data)

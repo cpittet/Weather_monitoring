@@ -15,12 +15,18 @@ from sense_hat import SenseHat
 
 # ------------------------------------------------------------------------------
 # Constants
-IP_RP4 = '192.168.1.124'
-PORT = 8086
-USER_NAME = 'collector'
-PWD = 'radis'
-DB_NAME = 'db'
+CREDENTIALS_FILE = '../credentials.txt'
+# =================================================================
+# Read the credentials in the file, omit the last char that is '\n'
+# when using readline
+with open(CREDENTIALS_FILE, 'r') as f:
+    IP_RP4 = f.readline()[:-1]
+    PORT = f.readline()[:-1]
+    USER_NAME = f.readline()[:-1]
+    PWD = f.readline()[:-1]
+    DB_NAME = f.readline()[:-1]
 
+# =================================================================
 # ------------------------------------------------------------------------------
 
 # The list of samples to write to the db
