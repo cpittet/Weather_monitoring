@@ -9,7 +9,7 @@ services:
         networks:
             - monitoring
         volumes:
-            - grafana-volume:/var/lib/grafana
+            - ./grafana-volume:/var/lib/grafana
         env_file:
             - gf_smtp.env
 
@@ -25,14 +25,7 @@ services:
         env_file:
             - inflx.env
         volumes:
-            - influxdb-data-volume:/var/lib/influxdb
+            - ./influxdb-data-volume:/var/lib/influxdb
 
 networks:
   monitoring:
-
-volumes:
-  influxdb-data-volume:
-    external: true
-  backup_db:
-  grafana-volume:
-    external: true
