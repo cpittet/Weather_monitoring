@@ -315,9 +315,6 @@ df_convol = df_convol.set_index('Datetime')
 
 # Convolve the entire dataframe
 previous_row = query_last_raw_values(last_cleaned_time, client)
-print(previous_row)
-print("end")
-sys.exit()
 
 convolve_dataframe(df, dst_df=df_convol, previous_row=previous_row)
 
