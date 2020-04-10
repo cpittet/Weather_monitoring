@@ -75,7 +75,7 @@ def query_last_raw_values(last_cleaned_time, client):
         return pd.DataFrame(query_to_points(
             ('SELECT * FROM "db"."autogen"."data" '
             +'WHERE "source" = \'sensehat\' AND time = \''
-            + last_cleaned_time + '\''),
+            + str(last_cleaned_time) + '\''),
             client))
 
 # Check if the measurement 'clean_data' exists in the influxdb server
