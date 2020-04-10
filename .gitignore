@@ -4,5 +4,3 @@ src/database/gf_smtp.env
 src/data_collection/volume/*
 __pycache_*
 src/database/backup_db.sh
-src/database/grafana-volume/*
-src/database/influxdb-data-volume/*
