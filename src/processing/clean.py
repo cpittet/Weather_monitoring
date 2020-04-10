@@ -65,6 +65,19 @@ def query_convolution(client, from_time):
     return query_to_points(query, client)
 
 
+# Query the last values that were convolved (the actual values, not the last
+# values of the convolutions). If last_cleaned_time == 0, return None,
+# otherwise return a Dataframe containing only the whole last row
+def query_last_raw_values(last_cleaned_time, client):
+    if (last_cleaned_time == '0'):
+        return None
+    else:
+        return pd.DataFrame(query_to_points(
+            ('SELECT * FROM "db"."autogen"."data" '
+            +'WHERE "source" = \'sensehat\' AND time = \''
+            + last_cleaned_time + '\''),
+            client))
+
 # Check if the measurement 'clean_data' exists in the influxdb server
 # in database 'db'. If not, then no data have been cleaned yet and
 # return False, otherwise, some data have been cleand and return True
@@ -85,7 +98,7 @@ def check_clean_measurement(client):
 # a fields argument you should put i in double quotes (e.g. '"temperature"')
 # Returns (timestamp of last cleand sample, string of the query)
 def query_data_to_clean(client, source, last_cleaned=0, update_last_cleaned=True, fields='*'):
-    if (check_clean_measurement(client) and not(last_cleaned == 0 and not(update_last_cleaned))):
+    if (check_clean_measurement(client) and not(last_cleaned == '0' and not(update_last_cleaned))):
         # Measurement already exists
 
         if (update_last_cleaned):
@@ -115,17 +128,25 @@ def query_data_to_clean(client, source, last_cleaned=0, update_last_cleaned=True
 # the same columns names. It also sets the 1st element of each column to 0
 # as the convolution is just the identity for the 1st element
 # with the default filter. Default filter is the finite differences filter,
-# i.e. approximation of the derivative
-def convolve_dataframe(dataframe, dst_df, filter=[0, 1, -1]):
-    if (len(dataframe.index) >= 3):
-        df_np = df[CONVOL_COLS].to_numpy()
+# i.e. approximation of the derivative. previous_row is a Dataframe
+# containing the last values (the whole last row) that were convolved
+# (i.e. the temperature, etc, not the value of the convolution itself).
+# This is to avoid a gap in the convolution between 2 calls
+def convolve_dataframe(src_df, dst_df, previous_row, filter=[0, 1, -1]):
+    if (len(src_df.index) >= 3):
+        df_np = src_df[CONVOL_COLS].to_numpy()
 
         # Convolve all the columns except 'time' along their axis (axis 0)
         lambd = lambda col: np.convolve(col, filter, 'same')
         convol_np = np.apply_along_axis(lambd, axis=0, arr=df_np)
 
-        # Set to 0 the first values of each columns in the convolutions
-        convol_np[0,:] = 0
+        if (previous_row == None):
+            convol_np[0,:] = 0
+        else:
+            # Set the first values of each columns in the convolutions to the
+            # difference with the actual first value - actual last treated value
+            # to avoid gap in the convolutions signals between 2 different calls
+            convol_np[0,:] = df_np[0,:] - previous_row[CONVOL_COLS].to_numpy()[0]
 
         # Again, not yet found a way to set multiple columns at once
         # with multi-dimensional np array
@@ -135,7 +156,9 @@ def convolve_dataframe(dataframe, dst_df, filter=[0, 1, -1]):
 
 # Clean the given column with the specified rules below (see function clean_data)
 # The mode specify the techniques used to correct values : average or copy
-def clean_column(dataframe, dataframe_convol, col, mode='average'):
+# previous_row is the same as for convolve_dataframe
+def clean_column(dataframe, dataframe_convol, col, previous_row,
+                 mode='average'):
     values = dataframe[col].to_numpy()
     convol = dataframe_convol[col].to_numpy()
 
@@ -148,11 +171,14 @@ def clean_column(dataframe, dataframe_convol, col, mode='average'):
                 # I.e. there exist previous and next values
                 values[i] = (values[i-1] + values[i+1]) / 2.0
             elif (i > 0):
-                # I.e. there is no next value
+                # I.e. there is no next value, or we don't have it yet
                 values[i] = values[i-1]
             else:
-                # I.e. there is no previous value
-                values[i] = values[i+1]
+                if (previous_row == None):
+                    # I.e. there is no previous value
+                    values[i] = values[i+1]
+                else:
+                    values[i] = (previous_row[col].to_numpy()[0] + values[i+1]) / 2.0
     else:
         # I.e. copy method, only for temperature
         values[anormal_index] = dataframe[TMP_H].to_numpy()[anormal_index]
@@ -169,14 +195,14 @@ def clean_column(dataframe, dataframe_convol, col, mode='average'):
 #                    because they seem very close. In worst case,
 #                    it takes the corrected value of temperature_humidity
 # It takes the dataframe to clean and the dataframe of the convolution in args
-def clean_data(dataframe, dataframe_convol):
+def clean_data(dataframe, dataframe_convol, previous_row):
     columns = [HUM, PRES,
                TMP_H, TMP_P, TMP]
     for col in columns:
         if (col == TMP):
-            clean_column(dataframe, dataframe_convol, col, mode='copy')
+            clean_column(dataframe, dataframe_convol, col, previous_row, mode='copy')
         else:
-            clean_column(dataframe, dataframe_convol, col, mode='average')
+            clean_column(dataframe, dataframe_convol, col, previous_row, mode='average')
 
 
 # Make the meteo suisse dataframe dst_df containing the interpolated data for
@@ -288,7 +314,12 @@ df_convol['Datetime'] = pd.to_datetime(df['time'])
 df_convol = df_convol.set_index('Datetime')
 
 # Convolve the entire dataframe
-convolve_dataframe(df, dst_df=df_convol)
+previous_row = query_last_raw_values(last_cleaned_time, client)
+print(previous_row)
+print("end")
+sys.exit()
+
+convolve_dataframe(df, dst_df=df_convol, previous_row=previous_row)
 
 # Connect to DB with a DataFrameClient
 df_client = DataFrameClient(host=IP_RP4,
@@ -315,7 +346,7 @@ from_time = df['time'].to_numpy()[0]
 df_convol = pd.DataFrame(query_convolution(client, from_time))
 
 # Clean the data
-clean_data(df, df_convol)
+clean_data(df, df_convol, previous_row)
 # Now the dataframe df is clean
 
 # ------------------------------------------------------------------------------
