@@ -18,16 +18,26 @@ import format_OD
 
 # ------------------------------------------------------------------------------
 # Constants
-THRESHOLDS = {'temperature' : 5, 'humidity' : 7, 'pressure' : 1,
-              'temperature_humidity' : 5,
-              'temperature_pressure' : 5}
+TMP = 'temperature'
+TMP_H = 'temperature_humidity'
+TMP_P = 'temperature_pressure'
+HUM = 'humidity'
+PRES = 'pressure'
+
+THRESHOLDS = {TMP : 5, HUM : 7, PRES : 1,
+              TMP_H : 5,
+              TMP_P : 5}
 IP_RP4 = '192.168.1.124'
 PORT = 8086
 USER_NAME = 'collector'
 PWD = 'radis'
 DB_NAME = 'db'
 
-FORMATED_COLS = {'temperature', 'humidity'}
+FORMATED_COLS = [TMP, HUM]
+ADJUSTED_COLS = [TMP, HUM,
+                 TMP_H, TMP_P]
+CONVOL_COLS = [TMP, HUM, PRES,
+               TMP_H, TMP_P]
 
 # ------------------------------------------------------------------------------
 # Functions
@@ -39,34 +49,13 @@ def query_to_points(query, client):
     results = client.query(query)
     return results.get_points()
 
+
 # Query the db for the convolution signal, from the specified sample
 def query_convolution(client, from_time):
     query = ('SELECT * FROM "db"."autogen"."convol_signals" '
             +'WHERE time >= \'' + from_time + '\'')
     return query_to_points(query, client)
 
-# Take a generator of points and returns a tuple containing :
-# 1) list containing 'temperature' data in ascending order of time
-#    (default in influxdb) i.e. index 0 has the oldest timestamp
-# 2) list containing 'temperature_humidity' data in ascending order
-# 3) list containing 'temperature_pressure' data in ascending order
-# 4) list containing 'humidity' data in ascending order
-# 5) list containing 'pressure' data in ascending order
-def result_to_lists(points_generator):
-    temp = []
-    temp_p = []
-    temp_h = []
-    humidity = []
-    pressure = []
-
-    for point in points_generator:
-        temp.append(point['temperature'])
-        temp_p.append(point['temperature_pressure'])
-        temp_h.append(point['temperature_humidity'])
-        humidity.append(point['humidity'])
-        pressure.append(point['pressure'])
-
-    return (temp, temp_h, temp_p, humidity, pressure)
 
 # Check if the measurement 'clean_data' exists in the influxdb server
 # in database 'db'. If not, then no data have been cleaned yet and
@@ -80,6 +69,7 @@ def check_clean_measurement(client):
     # The clean_data measurement was not found,
     # so no data have been cleaned yet
     return False
+
 
 # Make the right query according to the data that were already cleaned or not
 # and the given source tag value. Can pass directly the timestamp of last
@@ -111,24 +101,42 @@ def query_data_to_clean(client, source, last_cleaned=0, update_last_cleaned=True
                 ('SELECT ' + fields + ' FROM "db"."autogen"."data" WHERE "source" = \''
                 + source + '\''))
 
+
 # Make a convolution on the given column in the dataframe
 # with the given filter. Return the result, i.e. an np.array
 # the default filter is doing a difference current value - previous value
 def convolve_col(col_name,  dataframe, filter=[0, 1, -1]):
     return np.convolve(dataframe[col_name].to_numpy(), filter, 'same')
 
+
 # Convolve the entire dataframe (columns by columns) with given filter
 # and store the convolved signals into the given dest_df, keeping
 # the same columns names. It also sets the 1st element of each column to 0
 # as the convolution is just the identity for the 1st element
-# with the default filter
-def convolve_dataframe(dataframe, dest_df, filter=[0, 1, -1]):
+# with the default filter. Default filter is the finite differences filter,
+# i.e. approximation of the derivative
+def convolve_dataframe(dataframe, dst_df, filter=[0, 1, -1]):
     if (len(dataframe.index) >= 3):
-        for col in dataframe.columns:
-            if (col != 'time'):
-                conv = convolve_col(col, dataframe=dataframe, filter=filter)
-                conv[0] = 0
-                dest_df[col] = conv
+        df_np = df[CONVOL_COLS].to_numpy()
+
+        # Convolve all the columns except 'time' along their axis (axis 0)
+        lambd = lambda col: np.convolve(col, filter, 'same')
+        convol_np = np.apply_along_axis(lambd, axis=0, arr=df_np)
+
+        # Set to 0 the first values of each columns in the convolutions
+        convol_np[0,:] = 0
+
+        # Again, not yet found a way to set multiple columns at once
+        # with multi-dimensional np array
+        for i in range(len(CONVOL_COLS)):
+            dst_df[CONVOL_COLS[i]] = convol_np[:,i]
+
+        #for col in dataframe.columns:
+        #    if (col != 'time'):
+        #        conv = convolve_col(col, dataframe=dataframe, filter=filter)
+        #        conv[0] = 0
+        #        dest_df[col] = conv
+
 
 # Clean the given column with the specified rules below (see function clean_data)
 # The mode specify the techniques used to correct values : average or copy
@@ -152,9 +160,8 @@ def clean_column(dataframe, dataframe_convol, col, mode='average'):
                 values[i] = values[i+1]
     else:
         # I.e. copy method, only for temperature
-        values[anormal_index] = dataframe['temperature_humidity'].to_numpy()[anormal_index]
+        values[anormal_index] = dataframe[TMP_H].to_numpy()[anormal_index]
     dataframe[col] = values
-
 
 
 # Correct the anormal values spotted by the convolution signal
@@ -168,13 +175,14 @@ def clean_column(dataframe, dataframe_convol, col, mode='average'):
 #                    it takes the corrected value of temperature_humidity
 # It takes the dataframe to clean and the dataframe of the convolution in args
 def clean_data(dataframe, dataframe_convol):
-    columns = ['humidity', 'pressure',
-               'temperature_humidity', 'temperature_pressure', 'temperature']
+    columns = [HUM, PRES,
+               TMP_H, TMP_P, TMP]
     for col in columns:
-        if (col == 'temperature'):
+        if (col == TMP):
             clean_column(dataframe, dataframe_convol, col, mode='copy')
         else:
             clean_column(dataframe, dataframe_convol, col, mode='average')
+
 
 # Make the meteo suisse dataframe dst_df containing the interpolated data for
 # every hour using the module format_OD from the given src_df "raw" meteo
@@ -182,44 +190,60 @@ def clean_data(dataframe, dataframe_convol):
 # Returns the formated dataframe dst_df
 def prepare_ms_df(src_df, time_column):
     # Add the needed columns to the newly created dst_df dataframe:
-    # with the correct size : 'time', 'temperature', 'humidity'
+    # with the correct size : 'time', TMP, HUM
     dst_df = pd.DataFrame();
     dst_df['time'] = pd.to_datetime(time_column)
-    dst_df['temperature'] = np.empty(len(dst_df.index))
-    dst_df['humidity'] = np.empty(len(dst_df.index))
+    len_dst = len(dst_df.index)
+    dst_df[TMP] = np.empty(len_dst)
+    dst_df[HUM] = np.empty(len_dst)
 
     # Format the dataframe
     format_OD.format_dataframe(dst_df, src_df, FORMATED_COLS)
     return dst_df
 
-# Compute the average difference of column col between the values in the sensehat_clean_df
+
+# Compute the average differences between the values in the sensehat_clean_df
 # dataframe and the corresponding one in the form_ms_df formated meteo suisse
 # data dataframe. It does not take into account the values for which there
 # is a Nan in either dataframe. It is supposed that both columns have
 # the same indexing and values at same index correspond to the same time
-# Returns the average
-def avg_diff_col(form_ms_df, sensehat_clean_df, col):
-    ms = form_ms_df[col].to_numpy()
-    sh = sensehat_clean_df[col].to_numpy()
-    return np.nanmean((sh - ms), axis=0)
-
-# Compute the average difference for each formated column between those 2
-# dataframes. Returns them as a dict : {'temperature' : avg_diff_temp,
-# 'humidity' : avg_diff_humidity}
+# Returns them as a dict : {'temperature' : avg_diff_temp,
+# HUM : avg_diff_humidity}
 def avg_diff_df(form_ms_df, sensehat_clean_df):
-    avg_diffs = {'temperature' : 0, 'humidity' : 0}
-    for col in FORMATED_COLS:
-        avg_diffs[col] = avg_diff_col(form_ms_df, sensehat_clean_df, col)
-    avg_diffs['temperature_humidity'] = avg_diffs['temperature']
-    avg_diffs['temperature_pressure'] = avg_diffs['temperature']
+    avg_diffs = {TMP : 0, HUM : 0}
+
+    # Careful with the order of the columns
+    ms_matrix = form_ms_df[FORMATED_COLS].to_numpy()
+    sh_matrix = sensehat_clean_df[FORMATED_COLS].to_numpy()
+
+    # Directly do the difference by columns
+    means = np.nanmean((sh_matrix - ms_matrix), axis=0)
+
+    # Careful with the order of the columns
+    avg_diffs[TMP] = means[0]
+    avg_diffs[HUM] = means[1]
+    avg_diffs[TMP_H] = avg_diffs[TMP]
+    avg_diffs[TMP_P] = avg_diffs[TMP]
     return avg_diffs
+
 
 # Adjust the whole dataframe dst_df according to the adjustements dict,
 # which specify the adjustement to do for each column in the formated df
 def adjust_df(dst_df, adjustements):
-    for col in adjustements.keys():
-        nparr = dst_df[col].to_numpy()
-        dst_df[col] = nparr - adjustements[col]
+    dst_np = dst_df[ADJUSTED_COLS].to_numpy()
+
+    # Careful to put the columns in the same order
+    adjust_np = np.array([adjustements[TMP], adjustements[HUM],
+                         adjustements[TMP_H],
+                         adjustements[TMP_P]])
+    result_np = dst_np - adjust_np
+
+    # Not yet found a way to set all the columns at once with a multi-dimensional
+    # numpy array...
+    for i in range(4):
+        # Select the ith column in result_np
+        dst_df[ADJUSTED_COLS[i]] = result_np[:,i]
+
 
 # Write the given dataframe to the measurement on the database corresponding to
 # the influxdb client
@@ -269,7 +293,7 @@ df_convol['Datetime'] = pd.to_datetime(df['time'])
 df_convol = df_convol.set_index('Datetime')
 
 # Convolve the entire dataframe
-convolve_dataframe(df, df_convol)
+convolve_dataframe(df, dst_df=df_convol)
 
 # Connect to DB with a DataFrameClient
 df_client = DataFrameClient(host=IP_RP4,
@@ -292,7 +316,7 @@ write_df(df_convol, 'convol_signals', df_client)
 # if e.g. only the convolution is done and later the cleaning, then they won't
 # have the same indexing. To avoid this, we query again the db for the correct
 # time range, so we don't have problems with indexing
-from_time = df['time'].values[0]
+from_time = df['time'].to_numpy()[0]
 df_convol = pd.DataFrame(query_convolution(client, from_time))
 
 # Clean the data

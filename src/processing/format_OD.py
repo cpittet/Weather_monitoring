@@ -39,10 +39,11 @@ def before(t1, t2):
 def equal(t1, t2):
     return get_time(t1) == get_time(t2)
 
-# Returns the value at index i in the column 'time' of the given dataframe
-def get_index(df, i, col='time'):
-    if (i >= 0 and i < len(df.index)):
-        return str(df[col].values[i])
+# Returns the value at index i in the column corresponding to the given numpy
+# array corresponding to the dataframe
+def get_index(df_np, i):
+    if (i >= 0 and i < len(df_np)):
+        return str(df_np[i])
 
 # Returns the time delta between the 2 times in minutes
 def get_delta_time(t1, t2):
@@ -67,52 +68,60 @@ def make_formated_column(dst_df, src_df, col):
     # At the begining, check if there are the required values,
     # while the dst time is before the first src time, we put nan into dst_df
     i = 0
-    while(before(get_index(dst_df, i), get_index(src_df, 0))
+    dst_time_np = dst_df['time'].to_numpy()
+    src_time_np = src_df['time'].to_numpy()
+    dst_np = dst_df[col].to_numpy()
+    src_np = src_df[col].to_numpy()
+    while(before(get_index(dst_time_np, i), get_index(src_time_np, 0))
           and i < len(dst_df.index)):
-        dst_df[col].values[i] = np.nan
+        dst_np[i] = np.nan
         i += 1
 
     # The index for the src_df array
     s = 0
     reached_end = False
+
     # Now we reach the first equal or superior time
-    while(i < len(dst_df.index) and s < len(src_df.index)):
+    len_dst = len(dst_df.index)
+    len_src = len(src_df.index)
+    while(i < len_dst and s < len_src):
         # Seek the last src sample that have a time less or equal to the needed
         # dst_df sample time to fill at index i
-        while(not(reached_end) and before(get_index(src_df, s), get_index(dst_df, i))):
+        while(not(reached_end) and
+              before(get_index(src_time_np, s), get_index(dst_time_np, i))):
             s += 1
-            if (s >= len(src_df.index)):
+            if (s >= len_src):
                 reached_end = True
 
-        if(s < len(src_df.index)):
+        if(s < len_src):
             # Reached the src sample that has a time equal or superior to the dst
             # sample we need to fill
-            if (equal(get_index(src_df, s), get_index(dst_df, i))):
-                dst_df[col].values[i] = src_df[col].values[s]
+            if (equal(get_index(src_time_np, s), get_index(dst_time_np, i))):
+                dst_np[i] = src_np[s]
             else:
                 # Then it means the src sample at index s is the first after the
                 # dst sample we need to fill, so we interpolate between the src
                 # sample at index s-1 and the one at index s
 
                 # Time delta in minutes
-                start = get_index(src_df, s-1)
+                start = get_index(src_time_np, s-1)
                 duration = get_delta_time(start,
-                                          get_index(src_df, s))
+                                          get_index(src_time_np, s))
 
-                y1 = float(get_index(src_df, s-1, col=col))
-                y2 = float(get_index(src_df, s, col=col))
+                y1 = float(get_index(src_np, s-1))
+                y2 = float(get_index(src_np, s))
 
                 # Time delta from start to evaluation point
-                at_evaluation = get_delta_time(start, get_index(dst_df, i))
+                at_evaluation = get_delta_time(start, get_index(dst_time_np, i))
 
-                dst_df[col].values[i] = y1 + (y2 - y1) / duration * at_evaluation
+                dst_np[i] = y1 + (y2 - y1) / duration * at_evaluation
 
             i += 1
 
     # If there are still values in the dst_df that we need to fill, but
     # we reached the end of the src_df, then we put Nan values
-    while(i < len(dst_df.index)):
-        dst_df[col].values[i] = np.nan
+    while(i < len_dst):
+        dst_np[i] = np.nan
         i += 1
 
 

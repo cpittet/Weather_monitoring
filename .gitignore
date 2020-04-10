@@ -5,3 +5,4 @@ src/database/gf_smtp.env
 src/database/influxdb/config/*
 src/data_collection/volume/*
 __pycache_*
+src/database/backup_db.sh

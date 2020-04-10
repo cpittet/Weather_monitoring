@@ -26,7 +26,6 @@ services:
             - inflx.env
         volumes:
             - influxdb-data-volume:/var/lib/influxdb
-            - ./backup_db:/backup_db
 
 networks:
   monitoring:
