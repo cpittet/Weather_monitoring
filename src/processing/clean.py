@@ -73,7 +73,7 @@ def query_convolution(client, from_time):
 # values of the convolutions). If last_cleaned_time == 0, return None,
 # otherwise return a Dataframe containing only the whole last row
 def query_last_raw_values(last_cleaned_time, client):
-    if (last_cleaned_time == 0):
+    if (last_cleaned_time == '0'):
         return None
     else:
         return pd.DataFrame(query_to_points(
@@ -101,7 +101,7 @@ def check_clean_measurement(client):
 # cleaned data (if you have it) to avoid seeking it again. When giving
 # a fields argument you should put i in double quotes (e.g. '"temperature"')
 # Returns (timestamp of last cleand sample, string of the query)
-def query_data_to_clean(client, source, last_cleaned=0, update_last_cleaned=True, fields='*'):
+def query_data_to_clean(client, source, last_cleaned='0', update_last_cleaned=True, fields='*'):
     if (check_clean_measurement(client) and not(last_cleaned == '0' and not(update_last_cleaned))):
         # Measurement already exists
         if (update_last_cleaned):
@@ -119,7 +119,7 @@ def query_data_to_clean(client, source, last_cleaned=0, update_last_cleaned=True
         return (last_cleaned, query)
     else:
         # No data were cleaned yet, so we query all points in data
-        return (0,
+        return ('0',
                 ('SELECT ' + fields + ' FROM "db"."autogen"."data" WHERE "source" = \''
                 + source + '\''))
 
@@ -364,7 +364,6 @@ df_ms = pd.DataFrame(points_ms)
 
 # Format the meteo suisse data dataframe
 form_df = prepare_ms_df(df_ms, df['time'])
-
 if (form_df is not None):
     # Get the average differences for each columns
     # (i.e. sensehat data - meteo suisse data)
