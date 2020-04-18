@@ -1,4 +1,6 @@
-# Weather monitoring (in construction) ![Code Grade](https://www.code-inspector.com/project/6308/status/svg)
+# Weather monitoring (in construction)
+![Code Grade](https://www.code-inspector.com/project/6308/status/svg)
+
 Weather station using Raspberry Pi SenseHat sensor to collect data (temperature, humidity, pressure) and analyze / visualize them.
 
 ## Context
