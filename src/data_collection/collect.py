@@ -67,19 +67,19 @@ time.sleep(5)
 pixel = sensor.get_pixel(0, 7)
 
 # If yes, keep the error marker on the LEDs
-if (pixel[0] != 0):
+if pixel[0] != 0:
     x = [255, 0, 0]
     o = [0, 0, 0]
     error = [
-                    o, o, o, o, o, o, x, x,
-                    o, o, o, o, o, o, x, x,
-                    o, o, o, o, o, o, x, x,
-                    o, o, o, o, o, o, x, x,
-                    o, o, o, o, o, o, x, x,
-                    o, o, o, o, o, o, o, o,
-                    o, o, o, o, o, o, x, x,
-                    o, o, o, o, o, o, x, x
-                    ]
+             o, o, o, o, o, o, x, x,
+             o, o, o, o, o, o, x, x,
+             o, o, o, o, o, o, x, x,
+             o, o, o, o, o, o, x, x,
+             o, o, o, o, o, o, x, x,
+             o, o, o, o, o, o, o, o,
+             o, o, o, o, o, o, x, x,
+             o, o, o, o, o, o, x, x
+            ]
     sensor.set_pixels(error)
 else:
     sensor.clear()

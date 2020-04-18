@@ -5,3 +5,4 @@ src/data_collection/volume/*
 __pycache_*
 src/database/backup_db.sh
 src/credentials.txt
+.idea
