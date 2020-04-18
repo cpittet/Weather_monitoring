@@ -76,6 +76,7 @@ def get_index(df_np, i):
     """
     if 0 <= i < len(df_np):
         return str(df_np[i])
+    return None
 
 
 def get_delta_time(t1, t2):

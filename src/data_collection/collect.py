@@ -71,15 +71,14 @@ if pixel[0] != 0:
     x = [255, 0, 0]
     o = [0, 0, 0]
     error = [
-             o, o, o, o, o, o, x, x,
-             o, o, o, o, o, o, x, x,
-             o, o, o, o, o, o, x, x,
-             o, o, o, o, o, o, x, x,
-             o, o, o, o, o, o, x, x,
-             o, o, o, o, o, o, o, o,
-             o, o, o, o, o, o, x, x,
-             o, o, o, o, o, o, x, x
-            ]
+        o, o, o, o, o, o, x, x,
+        o, o, o, o, o, o, x, x,
+        o, o, o, o, o, o, x, x,
+        o, o, o, o, o, o, x, x,
+        o, o, o, o, o, o, x, x,
+        o, o, o, o, o, o, o, o,
+        o, o, o, o, o, o, x, x,
+        o, o, o, o, o, o, x, x]
     sensor.set_pixels(error)
 else:
     sensor.clear()

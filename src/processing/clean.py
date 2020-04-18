@@ -91,12 +91,12 @@ def query_last_raw_values(last_cleaned_time, client):
     """
     if last_cleaned_time == '0':
         return None
-    else:
-        return pd.DataFrame(query_to_points(
-            ('SELECT * FROM "db"."autogen"."data" '
-             + 'WHERE "source" = \'sensehat\' AND time = \''
-             + str(last_cleaned_time) + '\''),
-            client))
+
+    return pd.DataFrame(query_to_points(
+        ('SELECT * FROM "db"."autogen"."data" '
+         + 'WHERE "source" = \'sensehat\' AND time = \''
+         + str(last_cleaned_time) + '\''),
+         client))
 
 
 def check_clean_measurement(client):
@@ -145,14 +145,13 @@ def query_data_to_clean(client, source, last_cleaned='0', update_last_cleaned=Tr
         query = ('SELECT ' + fields + ' FROM "db"."autogen"."data" WHERE "source" = \''
                  + source + '\' AND time > \'' + str(last_cleaned) + '\'')
         return last_cleaned, query
-    else:
-        # No data were cleaned yet, so we query all points in data
-        return ('0',
-                ('SELECT ' + fields + ' FROM "db"."autogen"."data" WHERE "source" = \''
-                  + source + '\''))
+    # No data were cleaned yet, so we query all points in data
+    return ('0',
+            ('SELECT ' + fields + ' FROM "db"."autogen"."data" WHERE "source" = \''
+             + source + '\''))
 
 
-def convolve_dataframe(src_df, dst_df, previous_row, filter=[0, 1, -1]):
+def convolve_dataframe(src_df, dst_df, previous_row):
     """
     Convolve the entire dataframe (columns by columns) with given filter
     and store the convolved signals into the given dest_df, keeping
@@ -166,9 +165,9 @@ def convolve_dataframe(src_df, dst_df, previous_row, filter=[0, 1, -1]):
     :param dst_df: the destination pandas dataframe
     :param src_df: the source pandas dataframe
     :param previous_row: the measurement values of the last convolved data (see above)
-    :param filter: the filter to use for the convolution
     """
     if len(src_df.index) >= 3:
+        filter=[0, 1, -1]
         df_np = src_df[CONVOL_COLS].to_numpy()
 
         # Convolve all the columns except 'time' along their axis (axis 0)
@@ -268,7 +267,7 @@ def prepare_ms_df(src_df, time_column):
 
     # Add the needed columns to the newly created dst_df dataframe:
     # with the correct size : 'time', TMP, HUM
-    dst_df = pd.DataFrame();
+    dst_df = pd.DataFrame()
     dst_df['time'] = pd.to_datetime(time_column)
     len_dst = len(dst_df.index)
     dst_df[TMP] = np.empty(len_dst)
