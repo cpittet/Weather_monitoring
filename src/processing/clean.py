@@ -54,7 +54,11 @@ CONVOL_COLS = [TMP, HUM, PRES,
 # Query the db and returns the generator of the points
 # Note that the time is in UTC
 def query_to_points(query, client):
-    results = client.query(query)
+    try:
+        results = client.query(query)
+    except:
+        client.close()
+        return
     return results.get_points()
 
 
@@ -75,7 +79,7 @@ def query_last_raw_values(last_cleaned_time, client):
         return pd.DataFrame(query_to_points(
             ('SELECT * FROM "db"."autogen"."data" '
             +'WHERE "source" = \'sensehat\' AND time = \''
-            + last_cleaned_time + '\''),
+            + str(last_cleaned_time) + '\''),
             client))
 
 # Check if the measurement 'clean_data' exists in the influxdb server
@@ -97,10 +101,9 @@ def check_clean_measurement(client):
 # cleaned data (if you have it) to avoid seeking it again. When giving
 # a fields argument you should put i in double quotes (e.g. '"temperature"')
 # Returns (timestamp of last cleand sample, string of the query)
-def query_data_to_clean(client, source, last_cleaned=0, update_last_cleaned=True, fields='*'):
+def query_data_to_clean(client, source, last_cleaned='0', update_last_cleaned=True, fields='*'):
     if (check_clean_measurement(client) and not(last_cleaned == '0' and not(update_last_cleaned))):
         # Measurement already exists
-
         if (update_last_cleaned):
             # Query what was the last cleaned data point
             query = 'SELECT LAST("temperature") FROM "db"."autogen"."convol_signals"'
@@ -112,13 +115,11 @@ def query_data_to_clean(client, source, last_cleaned=0, update_last_cleaned=True
 
         # Query from the last_cleaned data, autogen is the retention policy
         query = ('SELECT ' + fields + ' FROM "db"."autogen"."data" WHERE "source" = \''
-                 + source + '\' AND time > \'' + str(last_cleaned) + '\'')
-
+                 + source + '\' AND time > \'' + str(last_cleaned)+'\'')
         return (last_cleaned, query)
-
     else:
         # No data were cleaned yet, so we query all points in data
-        return (0,
+        return ('0',
                 ('SELECT ' + fields + ' FROM "db"."autogen"."data" WHERE "source" = \''
                 + source + '\''))
 
@@ -140,7 +141,7 @@ def convolve_dataframe(src_df, dst_df, previous_row, filter=[0, 1, -1]):
         lambd = lambda col: np.convolve(col, filter, 'same')
         convol_np = np.apply_along_axis(lambd, axis=0, arr=df_np)
 
-        if (previous_row == None):
+        if (previous_row is None):
             convol_np[0,:] = 0
         else:
             # Set the first values of each columns in the convolutions to the
@@ -174,7 +175,7 @@ def clean_column(dataframe, dataframe_convol, col, previous_row,
                 # I.e. there is no next value, or we don't have it yet
                 values[i] = values[i-1]
             else:
-                if (previous_row == None):
+                if (previous_row is None):
                     # I.e. there is no previous value
                     values[i] = values[i+1]
                 else:
@@ -210,6 +211,9 @@ def clean_data(dataframe, dataframe_convol, previous_row):
 # suisse dataframe. The hours corresponds to the given 'time' column.
 # Returns the formated dataframe dst_df
 def prepare_ms_df(src_df, time_column):
+    if (len(src_df.index) == 0):
+        return None
+
     # Add the needed columns to the newly created dst_df dataframe:
     # with the correct size : 'time', TMP, HUM
     dst_df = pd.DataFrame();
@@ -315,9 +319,6 @@ df_convol = df_convol.set_index('Datetime')
 
 # Convolve the entire dataframe
 previous_row = query_last_raw_values(last_cleaned_time, client)
-print(previous_row)
-print("end")
-sys.exit()
 
 convolve_dataframe(df, dst_df=df_convol, previous_row=previous_row)
 
@@ -363,22 +364,22 @@ df_ms = pd.DataFrame(points_ms)
 
 # Format the meteo suisse data dataframe
 form_df = prepare_ms_df(df_ms, df['time'])
+if (form_df is not None):
+    # Get the average differences for each columns
+    # (i.e. sensehat data - meteo suisse data)
+    avg_diffs = avg_diff_df(form_df, df)
 
-# Get the average differences for each columns
-# (i.e. sensehat data - meteo suisse data)
-avg_diffs = avg_diff_df(form_df, df)
+    # Adjust the clean sensehat dataframe "df" with the average differences
+    # for each column (in place)
+    adjust_df(df, avg_diffs)
 
-# Adjust the clean sensehat dataframe "df" with the average differences
-# for each column (in place)
-adjust_df(df, avg_diffs)
-
-# Now "df" is the sensehat data, cleaned and adjusted
-# Write the result to the measurement "clean_sh_data"
-# (just have to set the index to the time column to be able to write
-# directly to the influxdb database)
-df['time'] = pd.to_datetime(df['time'])
-df = df.set_index('time')
-write_df(df, 'clean_sh_data', df_client)
+    # Now "df" is the sensehat data, cleaned and adjusted
+    # Write the result to the measurement "clean_sh_data"
+    # (just have to set the index to the time column to be able to write
+    # directly to the influxdb database)
+    df['time'] = pd.to_datetime(df['time'])
+    df = df.set_index('time')
+    write_df(df, 'clean_sh_data', df_client)
 
 # Close the connections to the influxdb server
 df_client.close()
