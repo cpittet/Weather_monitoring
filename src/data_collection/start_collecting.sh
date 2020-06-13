@@ -9,9 +9,8 @@
 # Creates the volume directory of the host if it does not exist
 mkdir -p volume
 
-# Data are collected every hour at 00 min
-# they are sent every 6 hours (so 6 data samples), on the 30 min :
-# at 0030, 0630, 1230, 1830. See crontab guru for format
+# Data are collected every half hour at **00 and **30
+# They are sent every hour to the db at **05
 
 # Add the collect.py task to the crontab
 
@@ -19,7 +18,7 @@ mkdir -p volume
 # write out current crontab
 crontab -l > mycron
 # echo new cron into cron file
-echo "0 * * * * cd /home/pi/RaspberryProjects/weather_monitoring/Weather_monitoring/src/data_collection && python3 collect.py" >> mycron
+echo "*/30 * * * * cd /home/pi/RaspberryProjects/weather_monitoring/Weather_monitoring/src/data_collection && python3 collect.py" >> mycron
 
 # Add the send_db.sh task to the crontab.
 echo "5 * * * * cd /home/pi/RaspberryProjects/weather_monitoring/Weather_monitoring/src/data_collection && python3 transfer_db.py" >> mycron
