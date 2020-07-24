@@ -21,7 +21,7 @@ crontab -l > mycron
 echo "*/30 * * * * cd /home/pi/RaspberryProjects/weather_monitoring/Weather_monitoring/src/data_collection && python3 collect.py" >> mycron
 
 # Add the send_db.sh task to the crontab.
-echo "5, 35 * * * * cd /home/pi/RaspberryProjects/weather_monitoring/Weather_monitoring/src/data_collection && python3 transfer_db.py" >> mycron
+echo "5,35 * * * * cd /home/pi/RaspberryProjects/weather_monitoring/Weather_monitoring/src/data_collection && python3 transfer_db.py" >> mycron
 
 # install new cron file
 crontab mycron
