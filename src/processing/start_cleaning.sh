@@ -7,7 +7,7 @@
 # write out current crontab
 crontab -l > mycron
 # echo new cron into cron file
-echo "30 23 * * * cd /home/pi/RaspberryProjects/weather_monitoring/Weather_monitoring/src/processing && python3 clean.py" >> mycron
+echo "45 23 * * * cd /home/pi/RaspberryProjects/weather_monitoring/Weather_monitoring/src/processing && python3 clean.py" >> mycron
 
 # install new cron file
 crontab mycron
